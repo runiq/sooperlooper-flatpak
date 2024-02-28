@@ -1,0 +1,69 @@
+id: com.sonosaurus.SooperLooper
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: slgui
+finish-args:
+  - "--share=ipc"
+  - "--share=network"
+  - "--socket=fallback-x11"
+  - "--socket=wayland"
+  - "--device=all"
+  - "--filesystem=xdg-run/pipewire-0"
+modules:
+  - "shared-modules/linux-audio/fftw3f.json"
+  - "shared-modules/linux-audio/liblo.json"
+  - name: rubberband
+    sources:
+      - sha256: d9ef89e2b8ef9f85b13ac3c2faec30e20acf2c9f3a9c8c45ce637f2bc95e576c
+        type: archive
+        url: https://breakfastquay.com/files/releases/rubberband-3.3.0.tar.bz2
+      - path: rubberband.pc
+        type: file
+    buildsystem: simple
+    build-commands:
+      - make -f otherbuilds/Makefile.linux
+      - install -Dm644 -t /app/include/rubberband rubberband/RubberBandStretcher.h
+      - install -Dm644 -t /app/lib lib/librubberband.a
+      - install -Dm644 -t /app/lib/pkgconfig rubberband.pc
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /lib
+  - name: wxWidgets
+    sources:
+      - type: archive
+        url: "https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.tar.bz2"
+        sha256: "0640e1ab716db5af2ecb7389dbef6138d7679261fbff730d23845ba838ca133e"
+        x-checker-data:
+          type: anitya
+          project-id: 5150
+          stable-only: true
+          url-template: "https://github.com/wxWidgets/wxWidgets/releases/download/v$version/wxWidgets-$version.tar.bz2"
+          versions: "{'!=': 3.2.4-with-msvs2012-fix}"
+    buildsystem: cmake-ninja
+    cleanup:
+      - /bin
+      - /include
+      - /lib/cmake
+      - /lib/wx
+      - /share
+  - name: sigc++
+    sources:
+      - sha256: "a9dbee323351d109b7aee074a9cb89ca3e7bcf8ad8edef1851f4cf359bd50843"
+        type: archive
+        url: "https://download.gnome.org/sources/libsigc++/2.12/libsigc%2B%2B-2.12.1.tar.xz"
+    buildsystem: meson
+    config-opts:
+      - "-Dbuild-examples=false"
+    cleanup:
+      - '*.la'
+      - /include/sigc++-2.0
+      - /lib/pkgconfig
+      - /lib/sigc++-2.0
+  - name: sooperlooper
+    sources:
+      - type: git
+        url: https://github.com/essej/sooperlooper
+        tag: v1.7.9
+    buildsystem: autotools
